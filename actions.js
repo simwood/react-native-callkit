@@ -1,4 +1,4 @@
-import { 
+import {
     NativeModules,
     NativeEventEmitter,
 } from 'react-native';
@@ -12,6 +12,7 @@ const RNCallKitPerformEndCallAction = 'RNCallKitPerformEndCallAction';
 const RNCallKitDidActivateAudioSession = 'RNCallKitDidActivateAudioSession';
 const RNCallKitDidDisplayIncomingCall = 'RNCallKitDidDisplayIncomingCall';
 const RNCallKitDidPerformSetMutedCallAction = 'RNCallKitDidPerformSetMutedCallAction';
+const RNCallKitDidPerformHeldCallAction = 'RNCallKitDidPerformHeldCallAction';
 
 didReceiveStartCallAction = handler => {
     const listener = _RNCallKitEmitter.addListener(
@@ -57,12 +58,20 @@ didPerformSetMutedCallAction = handler => (
     )
 )
 
-export const listeners = { 
+didPerformSetHeldCallAction = handler => {
+    _RNCallKitEmitter.addListener(
+        RNCallKitDidPerformHeldCallAction,
+        (data) => { handler(data); }
+    )
+}
+
+export const listeners = {
     didReceiveStartCallAction,
     answerCall,
     endCall,
     didActivateAudioSession,
     didDisplayIncomingCall,
     didPerformSetMutedCallAction,
+    didPerformSetHeldCallAction,
 };
 

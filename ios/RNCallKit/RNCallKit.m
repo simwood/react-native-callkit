@@ -24,6 +24,7 @@ static NSString *const RNCallKitPerformEndCallAction = @"RNCallKitPerformEndCall
 static NSString *const RNCallKitDidActivateAudioSession = @"RNCallKitDidActivateAudioSession";
 static NSString *const RNCallKitDidDisplayIncomingCall = @"RNCallKitDidDisplayIncomingCall";
 static NSString *const RNCallKitDidPerformSetMutedCallAction = @"RNCallKitDidPerformSetMutedCallAction";
+static NSString *const RNCallKitDidPerformHeldCallAction = @"RNCallKitDidPerformHeldCallAction";
 
 @implementation RNCallKit
 {
@@ -67,7 +68,8 @@ RCT_EXPORT_MODULE()
              RNCallKitPerformEndCallAction,
              RNCallKitDidActivateAudioSession,
              RNCallKitDidDisplayIncomingCall,
-             RNCallKitDidPerformSetMutedCallAction
+             RNCallKitDidPerformSetMutedCallAction,
+             RNCallKitDidPerformHeldCallAction
              ];
 }
 
@@ -481,6 +483,15 @@ continueUserActivity:(NSUserActivity *)userActivity
     NSLog(@"[RNCallKit][CXProviderDelegate][provider:performSetMutedCallAction]");
 #endif
     [self sendEventWithName:RNCallKitDidPerformSetMutedCallAction body:@{ @"muted": @(action.muted) }];
+    [action fulfill];
+}
+
+-(void)provider:(CXProvider *)provider performSetHeldCallAction:(CXSetHeldCallAction *)action
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKit][CXProviderDelegate][provider:performSetHeldCallAction]");
+#endif
+    [self sendEventWithName:RNCallKitDidPerformHeldCallAction body:@{ @"onHold": @(action.onHold), @"callUUID": @(action.callUUID) }];
     [action fulfill];
 }
 
