@@ -122,9 +122,9 @@ RCT_EXPORT_METHOD(displayIncomingCall:(NSString *)uuidString
     NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:uuidString];
     CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
     callUpdate.remoteHandle = [[CXHandle alloc] initWithType:_handleType value:handle];
-    callUpdate.supportsDTMF = YES;
+    callUpdate.supportsDTMF = NO;
     // TODO: Holding
-    callUpdate.supportsHolding = NO;
+    callUpdate.supportsHolding = YES;
     callUpdate.supportsGrouping = NO;
     callUpdate.supportsUngrouping = NO;
     callUpdate.hasVideo = hasVideo;
@@ -242,8 +242,8 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
                 CXStartCallAction *startCallAction = [transaction.actions firstObject];
                 CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
                 callUpdate.remoteHandle = startCallAction.handle;
-                callUpdate.supportsDTMF = YES;
-                callUpdate.supportsHolding = NO;
+                callUpdate.supportsDTMF = NO;
+                callUpdate.supportsHolding = YES;
                 callUpdate.supportsGrouping = NO;
                 callUpdate.supportsUngrouping = NO;
                 callUpdate.hasVideo = NO;
@@ -291,7 +291,7 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
     NSLog(@"[RNCallKit][getProviderConfiguration]");
 #endif
     CXProviderConfiguration *providerConfiguration = [[CXProviderConfiguration alloc] initWithLocalizedName:_settings[@"appName"]];
-    providerConfiguration.supportsVideo = YES;
+    providerConfiguration.supportsVideo = NO;
     providerConfiguration.maximumCallGroups = 1;
     providerConfiguration.maximumCallsPerCallGroup = 1;
     providerConfiguration.supportedHandleTypes = [NSSet setWithObjects:[NSNumber numberWithInteger:CXHandleTypePhoneNumber], [NSNumber numberWithInteger:CXHandleTypeEmailAddress], [NSNumber numberWithInteger:CXHandleTypeGeneric], nil];
