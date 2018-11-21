@@ -448,13 +448,6 @@ continueUserActivity:(NSUserActivity *)userActivity
     [action fulfill];
 }
 
-- (void)provider:(CXProvider *)provider performSetHeldCallAction:(CXSetHeldCallAction *)action
-{
-#ifdef DEBUG
-    NSLog(@"[RNCallKit][CXProviderDelegate][provider:performSetHeldCallAction]");
-#endif
-}
-
 - (void)provider:(CXProvider *)provider timedOutPerformingAction:(CXAction *)action
 {
 #ifdef DEBUG
@@ -491,7 +484,8 @@ continueUserActivity:(NSUserActivity *)userActivity
 #ifdef DEBUG
     NSLog(@"[RNCallKit][CXProviderDelegate][provider:performSetHeldCallAction]");
 #endif
-    [self sendEventWithName:RNCallKitDidPerformHeldCallAction body:@{ @"onHold": @(action.onHold), @"callUUID": @(action.callUUID) }];
+    NSString *callUUID = [self containsLowerCaseLetter:action.callUUID.UUIDString] ? action.callUUID.UUIDString : [action.callUUID.UUIDString lowercaseString];
+    [self sendEventWithName:RNCallKitDidPerformHeldCallAction body:@{ @"onHold": @(action.onHold), @"callUUID": callUUID }];
     [action fulfill];
 }
 
