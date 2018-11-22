@@ -125,8 +125,8 @@ RCT_EXPORT_METHOD(displayIncomingCall:(NSString *)uuidString
     callUpdate.supportsDTMF = NO;
     // TODO: Holding
     callUpdate.supportsHolding = YES;
-    callUpdate.supportsGrouping = NO;
-    callUpdate.supportsUngrouping = NO;
+    callUpdate.supportsGrouping = YES;
+    callUpdate.supportsUngrouping = YES;
     callUpdate.hasVideo = hasVideo;
     callUpdate.localizedCallerName = localizedCallerName;
 
@@ -244,8 +244,8 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
                 callUpdate.remoteHandle = startCallAction.handle;
                 callUpdate.supportsDTMF = NO;
                 callUpdate.supportsHolding = YES;
-                callUpdate.supportsGrouping = NO;
-                callUpdate.supportsUngrouping = NO;
+                callUpdate.supportsGrouping = YES;
+                callUpdate.supportsUngrouping = YES;
                 callUpdate.hasVideo = NO;
                 [self.callKitProvider reportCallWithUUID:startCallAction.callUUID updated:callUpdate];
             }
