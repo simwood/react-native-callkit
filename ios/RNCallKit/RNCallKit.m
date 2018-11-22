@@ -22,6 +22,7 @@ static NSString *const RNCallKitDidReceiveStartCallAction = @"RNCallKitDidReceiv
 static NSString *const RNCallKitPerformAnswerCallAction = @"RNCallKitPerformAnswerCallAction";
 static NSString *const RNCallKitPerformEndCallAction = @"RNCallKitPerformEndCallAction";
 static NSString *const RNCallKitDidActivateAudioSession = @"RNCallKitDidActivateAudioSession";
+static NSString *const RNCallKitDidDeactivateAudioSession = @"RNCallKitDidDeactivateAudioSession";
 static NSString *const RNCallKitDidDisplayIncomingCall = @"RNCallKitDidDisplayIncomingCall";
 static NSString *const RNCallKitDidPerformSetMutedCallAction = @"RNCallKitDidPerformSetMutedCallAction";
 static NSString *const RNCallKitDidPerformHeldCallAction = @"RNCallKitDidPerformHeldCallAction";
@@ -67,6 +68,7 @@ RCT_EXPORT_MODULE()
              RNCallKitPerformAnswerCallAction,
              RNCallKitPerformEndCallAction,
              RNCallKitDidActivateAudioSession,
+             RNCallKitDidDeactivateAudioSession,
              RNCallKitDidDisplayIncomingCall,
              RNCallKitDidPerformSetMutedCallAction,
              RNCallKitDidPerformHeldCallAction
@@ -468,6 +470,7 @@ continueUserActivity:(NSUserActivity *)userActivity
 #ifdef DEBUG
     NSLog(@"[RNCallKit][CXProviderDelegate][provider:didDeactivateAudioSession]");
 #endif
+    [self sendEventWithName:RNCallKitDidDeactivateAudioSession body:nil];
 }
 
 -(void)provider:(CXProvider *)provider performSetMutedCallAction:(CXSetMutedCallAction *)action

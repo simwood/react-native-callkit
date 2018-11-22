@@ -10,6 +10,7 @@ const RNCallKitDidReceiveStartCallAction = 'RNCallKitDidReceiveStartCallAction';
 const RNCallKitPerformAnswerCallAction = 'RNCallKitPerformAnswerCallAction';
 const RNCallKitPerformEndCallAction = 'RNCallKitPerformEndCallAction';
 const RNCallKitDidActivateAudioSession = 'RNCallKitDidActivateAudioSession';
+const RNCallKitDidDeactivateAudioSession = 'RNCallKitDidDeactivateAudioSession';
 const RNCallKitDidDisplayIncomingCall = 'RNCallKitDidDisplayIncomingCall';
 const RNCallKitDidPerformSetMutedCallAction = 'RNCallKitDidPerformSetMutedCallAction';
 const RNCallKitDidPerformHeldCallAction = 'RNCallKitDidPerformHeldCallAction';
@@ -44,6 +45,13 @@ didActivateAudioSession = handler => (
     )
 )
 
+didDeactivateAudioSession = handler => (
+    _RNCallKitEmitter.addListener(
+        RNCallKitDidDeactivateAudioSession,
+        () => { handler(); }
+    )
+)
+
 didDisplayIncomingCall = handler => (
     _RNCallKitEmitter.addListener(
         RNCallKitDidDisplayIncomingCall,
@@ -70,6 +78,7 @@ export const listeners = {
     answerCall,
     endCall,
     didActivateAudioSession,
+    didDeactivateAudioSession,
     didDisplayIncomingCall,
     didPerformSetMutedCallAction,
     didPerformSetHeldCallAction,
