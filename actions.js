@@ -62,7 +62,7 @@ didDisplayIncomingCall = handler => (
 didPerformSetMutedCallAction = handler => (
     _RNCallKitEmitter.addListener(
         RNCallKitDidPerformSetMutedCallAction,
-        (data) => { handler(data.muted); }
+        (data) => { handler(data); }
     )
 )
 
