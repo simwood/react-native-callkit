@@ -151,7 +151,7 @@ RCT_EXPORT_METHOD(displayIncomingCall:(NSString *)uuidString
 }
 
 // Update information about the call
-RCT_EXPORT_METHOD(updateIncomingCall:(NSString *)uuidString
+RCT_EXPORT_METHOD(updateCall:(NSString *)uuidString
                                handle:(NSString *)handle
                            handleType:(NSString *)handleType
                              hasVideo:(BOOL)hasVideo
@@ -162,7 +162,7 @@ RCT_EXPORT_METHOD(updateIncomingCall:(NSString *)uuidString
                    supportsUngrouping:(BOOL)supportsUngrouping)
 {
 #ifdef DEBUG
-    NSLog(@"[RNCallKit][updateIncomingCall] uuidString = %@", uuidString);
+    NSLog(@"[RNCallKit][updateCall] uuidString = %@", uuidString);
 #endif
     int _handleType = [self getHandleType:handleType];
     NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:uuidString];
