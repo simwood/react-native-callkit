@@ -40,9 +40,14 @@ export default class RNCallKit {
         _RNCallKit.setup(options);
     }
 
-    static displayIncomingCall(uuid, handle, handleType = 'number', hasVideo = false, localizedCallerName?: String) {
+    static displayIncomingCall(uuid, handle, handleType = 'number', hasVideo = false, localizedCallerName?: String, supportsDTMF = false, supportsHolding = false, supportsGrouping = false, supportsUngrouping = false) {
         if (Platform.OS !== 'ios') return;
-        _RNCallKit.displayIncomingCall(uuid, handle, handleType, hasVideo, localizedCallerName);
+        _RNCallKit.displayIncomingCall(uuid, handle, handleType, hasVideo, localizedCallerName, supportsDTMF, supportsHolding, supportsGrouping, supportsUngrouping);
+    }
+
+    static updateCall(uuid, handle, handleType = 'number', hasVideo = false, localizedCallerName?: String, supportsDTMF = false, supportsHolding = false, supportsGrouping = false, supportsUngrouping = false) {
+        if (Platform.OS !== 'ios') return;
+        _RNCallKit.updateCall(uuid, handle, handleType, hasVideo, localizedCallerName, supportsDTMF, supportsHolding, supportsGrouping, supportsUngrouping);
     }
 
     static startCall(uuid, handle, handleType = 'number', hasVideo = false, contactIdentifier?: String) {

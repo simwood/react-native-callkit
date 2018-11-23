@@ -25,7 +25,9 @@ static NSString *const RNCallKitDidActivateAudioSession = @"RNCallKitDidActivate
 static NSString *const RNCallKitDidDeactivateAudioSession = @"RNCallKitDidDeactivateAudioSession";
 static NSString *const RNCallKitDidDisplayIncomingCall = @"RNCallKitDidDisplayIncomingCall";
 static NSString *const RNCallKitDidPerformSetMutedCallAction = @"RNCallKitDidPerformSetMutedCallAction";
-static NSString *const RNCallKitDidPerformHeldCallAction = @"RNCallKitDidPerformHeldCallAction";
+static NSString *const RNCallKitDidPerformSetHeldCallAction = @"RNCallKitDidPerformSetHeldCallAction";
+static NSString *const RNCallKitDidPerformPlayDTMFCallAction = @"RNCallKitDidPerformPlayDTMFCallAction";
+static NSString *const RNCallKitDidPerformSetGroupCallAction = @"RNCallKitDidPerformSetGroupCallAction";
 
 @implementation RNCallKit
 {
@@ -71,7 +73,9 @@ RCT_EXPORT_MODULE()
              RNCallKitDidDeactivateAudioSession,
              RNCallKitDidDisplayIncomingCall,
              RNCallKitDidPerformSetMutedCallAction,
-             RNCallKitDidPerformHeldCallAction
+             RNCallKitDidPerformSetHeldCallAction,
+             RNCallKitDidPerformPlayDTMFCallAction,
+             RNCallKitDidPerformSetGroupCallAction
              ];
 }
 
@@ -115,7 +119,11 @@ RCT_EXPORT_METHOD(displayIncomingCall:(NSString *)uuidString
                                handle:(NSString *)handle
                            handleType:(NSString *)handleType
                              hasVideo:(BOOL)hasVideo
-                  localizedCallerName:(NSString * _Nullable)localizedCallerName)
+                  localizedCallerName:(NSString * _Nullable)localizedCallerName
+                         supportsDTMF:(BOOL)supportsDTMF
+                      supportsHolding:(BOOL)supportsHolding
+                     supportsGrouping:(BOOL)supportsGrouping
+                   supportsUngrouping:(BOOL)supportsUngrouping)
 {
 #ifdef DEBUG
     NSLog(@"[RNCallKit][displayIncomingCall] uuidString = %@", uuidString);
@@ -124,11 +132,10 @@ RCT_EXPORT_METHOD(displayIncomingCall:(NSString *)uuidString
     NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:uuidString];
     CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
     callUpdate.remoteHandle = [[CXHandle alloc] initWithType:_handleType value:handle];
-    callUpdate.supportsDTMF = NO;
-    // TODO: Holding
-    callUpdate.supportsHolding = YES;
-    callUpdate.supportsGrouping = YES;
-    callUpdate.supportsUngrouping = YES;
+    callUpdate.supportsDTMF = supportsDTMF;
+    callUpdate.supportsHolding = supportsHolding;
+    callUpdate.supportsGrouping = supportsGrouping;
+    callUpdate.supportsUngrouping = supportsUngrouping;
     callUpdate.hasVideo = hasVideo;
     callUpdate.localizedCallerName = localizedCallerName;
 
@@ -141,6 +148,33 @@ RCT_EXPORT_METHOD(displayIncomingCall:(NSString *)uuidString
             }
         }
     }];
+}
+
+// Update information about the call
+RCT_EXPORT_METHOD(updateIncomingCall:(NSString *)uuidString
+                               handle:(NSString *)handle
+                           handleType:(NSString *)handleType
+                             hasVideo:(BOOL)hasVideo
+                  localizedCallerName:(NSString * _Nullable)localizedCallerName
+                         supportsDTMF:(BOOL)supportsDTMF
+                      supportsHolding:(BOOL)supportsHolding
+                     supportsGrouping:(BOOL)supportsGrouping
+                   supportsUngrouping:(BOOL)supportsUngrouping)
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKit][updateIncomingCall] uuidString = %@", uuidString);
+#endif
+    int _handleType = [self getHandleType:handleType];
+    NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:uuidString];
+    CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
+    callUpdate.remoteHandle = [[CXHandle alloc] initWithType:_handleType value:handle];
+    callUpdate.supportsDTMF = supportsDTMF;
+    callUpdate.supportsHolding = supportsHolding;
+    callUpdate.supportsGrouping = supportsGrouping;
+    callUpdate.supportsUngrouping = supportsUngrouping;
+    callUpdate.hasVideo = hasVideo;
+    callUpdate.localizedCallerName = localizedCallerName;
+    [self.callKitProvider reportCallWithUUID:uuid updated:callUpdate];
 }
 
 RCT_EXPORT_METHOD(startCall:(NSString *)uuidString
@@ -244,11 +278,11 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
                 CXStartCallAction *startCallAction = [transaction.actions firstObject];
                 CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
                 callUpdate.remoteHandle = startCallAction.handle;
-                callUpdate.supportsDTMF = NO;
-                callUpdate.supportsHolding = YES;
-                callUpdate.supportsGrouping = YES;
-                callUpdate.supportsUngrouping = YES;
-                callUpdate.hasVideo = NO;
+                // callUpdate.supportsDTMF = NO;
+                // callUpdate.supportsHolding = YES;
+                // callUpdate.supportsGrouping = YES;
+                // callUpdate.supportsUngrouping = YES;
+                callUpdate.hasVideo = startCallAction.video;
                 [self.callKitProvider reportCallWithUUID:startCallAction.callUUID updated:callUpdate];
             }
         }
@@ -293,9 +327,9 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
     NSLog(@"[RNCallKit][getProviderConfiguration]");
 #endif
     CXProviderConfiguration *providerConfiguration = [[CXProviderConfiguration alloc] initWithLocalizedName:_settings[@"appName"]];
-    providerConfiguration.supportsVideo = NO;
-    providerConfiguration.maximumCallGroups = 3;
-    providerConfiguration.maximumCallsPerCallGroup = 1;
+    providerConfiguration.supportsVideo = _settings[@"supportsVideo"];
+    providerConfiguration.maximumCallGroups = _settings[@"maximumCallGroups"];
+    providerConfiguration.maximumCallsPerCallGroup = _settings[@"maximumCallsPerCallGroup"];
     providerConfiguration.supportedHandleTypes = [NSSet setWithObjects:[NSNumber numberWithInteger:CXHandleTypePhoneNumber], [NSNumber numberWithInteger:CXHandleTypeEmailAddress], [NSNumber numberWithInteger:CXHandleTypeGeneric], nil];
     if (_settings[@"imageName"]) {
         providerConfiguration.iconTemplateImageData = UIImagePNGRepresentation([UIImage imageNamed:_settings[@"imageName"]]);
@@ -489,7 +523,28 @@ continueUserActivity:(NSUserActivity *)userActivity
     NSLog(@"[RNCallKit][CXProviderDelegate][provider:performSetHeldCallAction]");
 #endif
     NSString *callUUID = [self containsLowerCaseLetter:action.callUUID.UUIDString] ? action.callUUID.UUIDString : [action.callUUID.UUIDString lowercaseString];
-    [self sendEventWithName:RNCallKitDidPerformHeldCallAction body:@{ @"onHold": @(action.onHold), @"callUUID": callUUID }];
+    [self sendEventWithName:RNCallKitDidPerformSetHeldCallAction body:@{ @"onHold": @(action.onHold), @"callUUID": callUUID }];
+    [action fulfill];
+}
+
+-(void)provider:(CXProvider *)provider performPlayDTMFCallAction:(CXPlayDTMFCallAction *)action
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKit][CXProviderDelegate][provider:performPlayDTMFCallAction]");
+#endif
+    NSString *callUUID = [self containsLowerCaseLetter:action.callUUID.UUIDString] ? action.callUUID.UUIDString : [action.callUUID.UUIDString lowercaseString];
+    [self sendEventWithName:RNCallKitDidPerformPlayDTMFCallAction body:@{ @"digits": action.digits, @"callUUID": callUUID }];
+    [action fulfill];
+}
+
+-(void)provider:(CXProvider *)provider performSetGroupCallAction:(CXSetGroupCallAction *)action
+{
+#ifdef DEBUG
+    NSLog(@"[RNCallKit][CXProviderDelegate][provider:performSetGroupCallAction]");
+#endif
+    NSString *callUUID = [self containsLowerCaseLetter:action.callUUID.UUIDString] ? action.callUUID.UUIDString : [action.callUUID.UUIDString lowercaseString];
+    NSString *callUUIDToGroupWith = [self containsLowerCaseLetter:action.callUUIDToGroupWith.UUIDString] ? action.callUUIDToGroupWith.UUIDString : [action.callUUIDToGroupWith.UUIDString lowercaseString];
+    [self sendEventWithName:RNCallKitDidPerformSetGroupCallAction body:@{ @"callUUID": callUUID, @"callUUIDToGroupWith": callUUID }];
     [action fulfill];
 }
 
