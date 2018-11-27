@@ -14,6 +14,9 @@
 #import <React/RCTUtils.h>
 
 #import <AVFoundation/AVAudioSession.h>
+#import <AVFoundation/AVFoundation.h>
+
+#import <WebRTC/RTCAudioSession.h>
 
 static int const DelayInSeconds = 3;
 
@@ -162,7 +165,7 @@ RCT_EXPORT_METHOD(updateCall:(NSString *)uuidString
                    supportsUngrouping:(BOOL)supportsUngrouping)
 {
 #ifdef DEBUG
-    NSLog(@"[RNCallKit][updateCall] uuidString = %@", uuidString);
+    NSLog(@"[RNCallKit][updateCall] uuidString = %@, hasVideo = %@", uuidString, hasVideo);
 #endif
     int _handleType = [self getHandleType:handleType];
     NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:uuidString];
@@ -232,6 +235,15 @@ RCT_EXPORT_METHOD(setHeldCall:(NSString *)uuidString onHold:(BOOL)onHold)
     CXTransaction *transaction = [[CXTransaction alloc] init];
     [transaction addAction:setHeldCallAction];
 
+    // RTCAudioSession* rtcAudioSession = [RTCAudioSession sharedInstance];
+    // if (onHold) {
+    //     NSLog(@"[RNCallKit][setHeldCall] deactivating rtc audio session");
+    //     [rtcAudioSession deactivateAudioUnit];
+    // } else {
+    //     NSLog(@"[RNCallKit][setHeldCall] activating rtc audio session");
+    //     [rtcAudioSession activateAudioUnit];
+    // }
+
     [self requestTransaction:transaction];
 }
 
@@ -282,7 +294,7 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
                 // callUpdate.supportsHolding = YES;
                 // callUpdate.supportsGrouping = YES;
                 // callUpdate.supportsUngrouping = YES;
-                callUpdate.hasVideo = startCallAction.video;
+                // callUpdate.hasVideo = startCallAction.video;
                 [self.callKitProvider reportCallWithUUID:startCallAction.callUUID updated:callUpdate];
             }
         }
@@ -357,6 +369,9 @@ RCT_EXPORT_METHOD(setMutedCall:(NSString *)uuidString muted:(BOOL)muted)
     NSTimeInterval bufferDuration = .005;
     [audioSession setPreferredIOBufferDuration:bufferDuration error:nil];
     [audioSession setActive:TRUE error:nil];
+
+    RTCAudioSession* rtcAudioSession = [RTCAudioSession sharedInstance];
+    [rtcAudioSession setUseManualAudio:YES];
 }
 
 + (BOOL)application:(UIApplication *)application
@@ -481,7 +496,12 @@ continueUserActivity:(NSUserActivity *)userActivity
 #endif
     NSString *callUUID = [self containsLowerCaseLetter:action.callUUID.UUIDString] ? action.callUUID.UUIDString : [action.callUUID.UUIDString lowercaseString];
     [self sendEventWithName:RNCallKitPerformEndCallAction body:@{ @"callUUID": callUUID }];
-    [action fulfill];
+
+    RTCAudioSession* rtcAudioSession = [RTCAudioSession sharedInstance];
+    [rtcAudioSession setIsAudioEnabled:NO];
+    [rtcAudioSession setUseManualAudio:NO];
+
+    [action fulfillWithDateEnded:[NSDate date]];
 }
 
 - (void)provider:(CXProvider *)provider timedOutPerformingAction:(CXAction *)action
@@ -496,6 +516,16 @@ continueUserActivity:(NSUserActivity *)userActivity
 #ifdef DEBUG
     NSLog(@"[RNCallKit][CXProviderDelegate][provider:didActivateAudioSession]");
 #endif
+    // NSDictionary *info = @{
+    //                        AVAudioSessionInterruptionTypeKey: @0,
+    //                        AVAudioSessionInterruptionOptionKey: @1
+    //                        };
+    // [[NSNotificationCenter defaultCenter] postNotificationName:AVAudioSessionInterruptionNotification object:self userInfo:info];
+
+    RTCAudioSession* rtcAudioSession = [RTCAudioSession sharedInstance];
+    [rtcAudioSession setIsAudioEnabled:YES];
+    [rtcAudioSession activateAudioUnit];
+
     [self sendEventWithName:RNCallKitDidActivateAudioSession body:nil];
 }
 
@@ -504,6 +534,10 @@ continueUserActivity:(NSUserActivity *)userActivity
 #ifdef DEBUG
     NSLog(@"[RNCallKit][CXProviderDelegate][provider:didDeactivateAudioSession]");
 #endif
+
+    RTCAudioSession* rtcAudioSession = [RTCAudioSession sharedInstance];
+    [rtcAudioSession deactivateAudioUnit];
+
     [self sendEventWithName:RNCallKitDidDeactivateAudioSession body:nil];
 }
 
@@ -524,6 +558,11 @@ continueUserActivity:(NSUserActivity *)userActivity
 #endif
     NSString *callUUID = [self containsLowerCaseLetter:action.callUUID.UUIDString] ? action.callUUID.UUIDString : [action.callUUID.UUIDString lowercaseString];
     [self sendEventWithName:RNCallKitDidPerformSetHeldCallAction body:@{ @"onHold": @(action.onHold), @"callUUID": callUUID }];
+    // AVAudioSession* audioSession = [AVAudioSession sharedInstance];
+    // if (action.onHold)
+    //   [audioSession setActive:FALSE error:nil];
+    // else
+    //   [audioSession setActive:TRUE error:nil];
     [action fulfill];
 }
 
